@@ -126,6 +126,7 @@ $(document).ready(function () {
 <div id="introduction" class="section level3">
 <h3>Introduction</h3>
 <p>The goal of this project is to predict the manner of exercise from the Groupware <a href="http://groupware.les.inf.puc-rio.br/har">Human Activity Recognition dataset</a>. The classes of exercises are as follows: “Six young health participants were asked to perform one set of 10 repetitions of the Unilateral Dumbbell Biceps Curl in five different fashions: exactly according to the specification (Class A), throwing the elbows to the front (Class B), lifting the dumbbell only halfway (Class C), lowering the dumbbell only halfway (Class D) and throwing the hips to the front (Class E).” A machine learning algorithm is used to predict class on a held out data set.</p>
+<p>Packages used in this report include caret, randomForest, dParallel, and knitr.</p>
 </div>
 <div id="training-data-pre-processing" class="section level3">
 <h3>Training Data Pre-Processing</h3>
@@ -231,7 +232,7 @@ registerDoSEQ()</code></pre>
 ## 
 ## Accuracy was used to select the optimal model using  the largest value.
 ## The final value used for the model was mtry = 27.</code></pre>
-<p>fit$finalModel gives a confusion matrix with error per class. The confusion matrix suggests the model is most accurate at predicting class A which users fall into class A, although the error is &lt;0.004 for all classes.</p>
+<p>fit$finalModel gives a confusion matrix with error per class. The confusion matrix suggests the model is most accurate at predicting which users fall into class A, although the error is &lt;0.004 for all classes.</p>
 <pre class="r"><code>fit$finalModel</code></pre>
 <pre><code>## 
 ## Call:

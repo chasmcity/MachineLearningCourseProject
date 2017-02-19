@@ -8,6 +8,8 @@ output: html_document
 The goal of this project is to predict the manner of exercise from the Groupware [Human Activity Recognition dataset](http://groupware.les.inf.puc-rio.br/har). The classes of exercises are as follows:
 "Six young health participants were asked to perform one set of 10 repetitions of the Unilateral Dumbbell Biceps Curl in five different fashions: exactly according to the specification (Class A), throwing the elbows to the front (Class B), lifting the dumbbell only halfway (Class C), lowering the dumbbell only halfway (Class D) and throwing the hips to the front (Class E)." A machine learning algorithm is used to predict class on a held out data set.
 
+Packages used in this report include caret, randomForest, dParallel, and knitr.
+
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
@@ -63,7 +65,7 @@ Print fit. This gives accuracy, kappa, and mtry values for the final model. mtry
 ```{r}
 fit
 ```
-fit$finalModel gives a confusion matrix with error per class. The confusion matrix suggests the model is most accurate at predicting class A which users fall into class A, although the error is <0.004 for all classes.
+fit$finalModel gives a confusion matrix with error per class. The confusion matrix suggests the model is most accurate at predicting which users fall into class A, although the error is <0.004 for all classes.
 ```{r}
 fit$finalModel
 ```
