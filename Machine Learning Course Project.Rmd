@@ -1,0 +1,88 @@
+---
+title: "Machine Learning Course Project"
+author: "Julian Chalek"
+date: "2/19/2017"
+output: html_document
+---
+### Introduction
+The goal of this project is to predict the manner of exercise from the Groupware [Human Activity Recognition dataset](http://groupware.les.inf.puc-rio.br/har). The classes of exercises are as follows:
+"Six young health participants were asked to perform one set of 10 repetitions of the Unilateral Dumbbell Biceps Curl in five different fashions: exactly according to the specification (Class A), throwing the elbows to the front (Class B), lifting the dumbbell only halfway (Class C), lowering the dumbbell only halfway (Class D) and throwing the hips to the front (Class E)." A machine learning algorithm is used to predict class on a held out data set.
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, include=FALSE}
+library(caret)
+library(randomForest)
+library(doParallel)
+library(knitr)
+```
+### Training Data Pre-Processing
+Read in the training data (pmlTR), remove all columns with >90% NA values, and remove non-performance related data. In fact, removing columns with >90% NA values gives the same result as removing columns with >50% NA values, however I chose the value of 90% because this would theoretically keep columns with roughly 2000 or less non-NA values. (The training data has 19622 rows.) Once obvious non-predictive columns are removed, use the the "nearZeroVar" function to see if there are any columns that are not likely to be good predictors due to low variance. In this case there were none, so there are 52 observations to use as predictors.
+```{r}
+pmlTR <- read.csv("pml-training.csv", na.strings = c("NA","#DIV/0!",""))
+pmlTR <- pmlTR[,colSums(is.na(pmlTR)) < nrow(pmlTR) * 0.90]
+pmlTR <- pmlTR[,-c(1:7)] #columns removed are unrelated to exercise performance
+nearZV <- nearZeroVar(pmlTR[,-53], saveMetrics = TRUE)
+nearZV
+```
+
+Set seed for reproducibility.
+```{r}
+set.seed(666)
+```
+Set up training run for x / y syntax because model format performs poorly.
+```{r}
+x <- pmlTR[,-53]
+y <- pmlTR[,53]
+```
+### Configure and Run Machine Learning Algorithm
+Initialize parallel processing to improve the efficiency of the machine learning algorithm.
+```{r}
+cluster <- makeCluster(detectCores() - 1) # convention to leave 1 core for OS
+registerDoParallel(cluster)
+```
+**Use the trainControl function to enable cross-validation and parallel processing for training.** I used 5 k-fold cross-validation as suggested in Greski's guide to parallel processing for this project. (https://github.com/lgreski/datasciencectacontent/blob/master/markdown/pml-randomForestPerformance.md)
+```{r}
+fitControl <- trainControl(method = "cv",
+                           number = 5,
+                           allowParallel = TRUE)
+```
+**Choose the Random Forest model for training, as it is an effective model for data where there are many factors with unknown relationships.**
+```{r, cache=TRUE}
+fit <- train(x,y, method="rf",data=pmlTR,trControl = fitControl)
+```
+Stop parallel processing.
+```{r}
+stopCluster(cluster)
+registerDoSEQ()
+```
+### Model Analysis
+Print fit. This gives accuracy, kappa, and mtry values for the final model. mtry is the number of random variables sampled at each split. The kappa statistic compare observed accuracy with expected accuracy. **The final model has an mtry value of 27, an accuracy of 0.994, and a kappa value of 0.993.**
+```{r}
+fit
+```
+fit$finalModel gives a confusion matrix with error per class. The confusion matrix suggests the model is most accurate at predicting class A which users fall into class A, although the error is <0.004 for all classes.
+```{r}
+fit$finalModel
+```
+Just for curiosity, fit$resample gives the accuracy and kappa values for each fold.
+```{r}
+fit$resample
+```
+**Since automated cross validation in the "train" function was used to build the model, use the estimated accuracy of our final model to estimate the out of sample error. That is, 1 - 0.994 = 0.006, the out of sample error.**
+
+### Test Set Pre-Processing
+Read in the data, and select only columns that were used as predictors during training. This happens to remove all columns with NA-values from the testing data in this case.
+```{r}
+testSet <- read.csv("pml-testing.csv")
+testSetP <- testSet[,colnames(testSet) %in% colnames(pmlTR)]
+```
+### Prediction
+```{r}
+prediction <- predict(fit, testSetP)
+x <- cbind.data.frame(testSet$user_name, testSet$cvtd_timestamp, prediction)
+colnames(x) <- c("User", "Time", "Class Prediction")
+kable(x)
+```
